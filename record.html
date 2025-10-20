@@ -13,7 +13,17 @@
     }
     h1 {
       text-align: center;
-      margin-bottom: 10px;
+      margin-bottom: 5px;
+    }
+    #yearSelectContainer {
+      text-align: center;
+      margin: 10px 0 20px 0;
+    }
+    select {
+      padding: 5px 10px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 14px;
     }
     table {
       width: 100%;
@@ -54,9 +64,6 @@
       width: 100% !important;
       height: 220px !important;
     }
-    .up { color: #28a745; font-weight: bold; }
-    .down { color: #dc3545; font-weight: bold; }
-    .nochange { color: #6c757d; }
     @media (max-width: 600px) {
       body { margin: 10px; }
       h1 { font-size: 18px; }
@@ -67,6 +74,11 @@
 </head>
 <body>
   <h1>🏋️‍♀️ Workout 月累積記錄</h1>
+  
+  <div id="yearSelectContainer">
+    <label for="yearSelect">📅 選擇年份：</label>
+    <select id="yearSelect"></select>
+  </div>
 
   <div id="summaryTable"></div>
 
@@ -93,13 +105,16 @@
     const SHEET_NAME = "sheet1";
     const URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?sheet=${SHEET_NAME}&tqx=out:json`;
 
+    let allData = [];
+    let chartInstances = {};
+
     fetch(URL)
       .then(res => res.text())
       .then(text => {
         const json = JSON.parse(text.substring(47, text.length - 2));
         const rows = json.table.rows;
 
-        const data = rows.map(r => ({
+        allData = rows.map(r => ({
           date: r.c[0]?.f || "",
           running: r.c[1]?.v || 0,
           weight: r.c[2]?.v || 0,
@@ -108,136 +123,149 @@
           trail: r.c[5]?.v || 0,
           yoga: r.c[6]?.v || 0,
           remark: r.c[7]?.v || ""
-        }));
+        })).filter(d => d.date);
 
-        // 🔹 依日期排序
-        const sorted = data.filter(d => d.date).sort((a, b) => new Date(b.date) - new Date(a.date));
+        allData.sort((a, b) => new Date(a.date) - new Date(b.date));
 
-        // 🔹 最近 10 筆
-        const recent10 = sorted.slice(0, 10);
+        // 🔹 年份選單
+        const years = [...new Set(allData.map(d => d.date.slice(0, 4)))];
+        const select = document.getElementById("yearSelect");
+        select.innerHTML = `<option value="recent12">最近12個月</option>` +
+          years.map(y => `<option value="${y}">${y}</option>`).join("");
 
-        // === 建立「最近 10 筆紀錄」表格 ===
-        const recentTable = document.createElement("table");
-        const rthead = `
-          <thead>
-            <tr>
-              <th>日期</th>
-              <th>跑步 (min)</th>
-              <th>肌力組數</th>
-              <th>壁球 (min)</th>
-              <th>教練指定作業</th>
-              <th>健行 (min)</th>
-              <th>瑜伽</th>
-              <th>備註</th>
-            </tr>
-          </thead>
-        `;
-        const rtbody = recent10.map(r => `
-          <tr>
-            <td>${r.date}</td>
-            <td>${r.running}</td>
-            <td>${r.weight}</td>
-            <td>${r.squash}</td>
-            <td>${r.assigned}</td>
-            <td>${r.trail}</td>
-            <td>${r.yoga}</td>
-            <td>${r.remark}</td>
-          </tr>
-        `).join("");
-        recentTable.innerHTML = rthead + "<tbody>" + rtbody + "</tbody>";
-        document.getElementById("recentTable").appendChild(recentTable);
-
-        // === 月統計 ===
-        const monthly = {};
-        data.forEach(item => {
-          if (!item.date) return;
-          const ym = item.date.slice(0, 7);
-          if (!monthly[ym]) {
-            monthly[ym] = { running: 0, weight: 0, squash: 0, assigned: 0, trail: 0, yoga: 0 };
-          }
-          monthly[ym].running += item.running;
-          monthly[ym].weight += item.weight;
-          monthly[ym].squash += item.squash;
-          monthly[ym].assigned += item.assigned;
-          monthly[ym].trail += item.trail;
-          monthly[ym].yoga += item.yoga;
+        select.addEventListener("change", e => {
+          renderAll(e.target.value);
         });
 
-        let labels = Object.keys(monthly).sort();
-        const sums = Object.values(monthly).map(d => ({
-          aerobic: d.running + d.squash + d.trail,
-          assigned: d.assigned,
-          strength: d.weight + d.yoga,
-          ...d
-        }));
-
-        // 🔹 僅取最近 12 個月
-        if (labels.length > 12) {
-          labels = labels.slice(-12);
-          sums.splice(0, sums.length - 12);
-        }
-
-        // === 月統計表格 ===
-        const table = document.createElement("table");
-        const thead = `
-          <thead>
-            <tr>
-              <th>月份</th>
-              <th>有氧活動時間 (min)</th>
-              <th>教練指定作業完成次數</th>
-              <th>肌力訓練次數</th>
-            </tr>
-          </thead>
-        `;
-        const tbody = labels.map((m, i) => {
-          const d = sums[i];
-          return `
-            <tr>
-              <td>${m}</td>
-              <td>${d.aerobic}</td>
-              <td>${d.assigned}</td>
-              <td>${d.strength}</td>
-            </tr>
-          `;
-        }).join("");
-        table.innerHTML = thead + "<tbody>" + tbody + "</tbody>";
-        document.getElementById("summaryTable").appendChild(table);
-
-        // === 三張折線圖 ===
-        function drawChart(id, label, dataKey, color) {
-          const ctx = document.getElementById(id);
-          new Chart(ctx, {
-            type: "line",
-            data: {
-              labels,
-              datasets: [{
-                label,
-                data: sums.map(x => x[dataKey]),
-                borderColor: color,
-                backgroundColor: color + "33",
-                fill: true,
-                tension: 0.25,
-                pointRadius: 4,
-                borderWidth: 2
-              }]
-            },
-            options: {
-              responsive: true,
-              scales: { y: { beginAtZero: true } },
-              plugins: { legend: { display: false } }
-            }
-          });
-        }
-
-        drawChart("aerobicChart", "🏃‍♂️ 有氧活動時間 (min)", "aerobic", "#36b9cc");
-        drawChart("assignedChart", "📋 教練指定作業完成次數", "assigned", "#f6c23e");
-        drawChart("strengthChart", "💪 肌力訓練次數", "strength", "#4e73df");
+        renderAll("recent12");
       })
       .catch(err => {
         console.error("讀取資料錯誤：", err);
         alert("無法讀取 Google 試算表資料，請確認是否設為公開檢視。");
       });
+
+    function renderAll(mode) {
+      // === 最近10筆 ===
+      const sorted = [...allData].sort((a, b) => new Date(b.date) - new Date(a.date));
+      const recent10 = sorted.slice(0, 10);
+      renderRecentTable(recent10);
+
+      // === 月統計 ===
+      const monthly = {};
+      allData.forEach(item => {
+        const ym = item.date.slice(0, 7);
+        if (!monthly[ym]) {
+          monthly[ym] = { running: 0, weight: 0, squash: 0, assigned: 0, trail: 0, yoga: 0 };
+        }
+        monthly[ym].running += item.running;
+        monthly[ym].weight += item.weight;
+        monthly[ym].squash += item.squash;
+        monthly[ym].assigned += item.assigned;
+        monthly[ym].trail += item.trail;
+        monthly[ym].yoga += item.yoga;
+      });
+
+      let labels = Object.keys(monthly).sort();
+      let sums = Object.values(monthly).map(d => ({
+        aerobic: d.running + d.squash + d.trail,
+        assigned: d.assigned,
+        strength: d.weight + d.yoga
+      }));
+
+      // 🔹 選擇年份或最近12月
+      if (mode === "recent12") {
+        if (labels.length > 12) {
+          labels = labels.slice(-12);
+          sums = sums.slice(-12);
+        }
+      } else {
+        const filter = labels.map((l, i) => ({ l, i })).filter(x => x.l.startsWith(mode));
+        labels = filter.map(x => x.l);
+        sums = filter.map(x => sums[x.i]);
+      }
+
+      renderSummaryTable(labels, sums);
+      renderCharts(labels, sums);
+    }
+
+    function renderRecentTable(data) {
+      const container = document.getElementById("recentTable");
+      container.innerHTML = "";
+      const table = document.createElement("table");
+      const thead = `
+        <thead><tr>
+          <th>日期</th><th>跑步(min)</th><th>肌力組數</th>
+          <th>壁球(min)</th><th>教練指定</th>
+          <th>健行(min)</th><th>瑜伽</th><th>備註</th>
+        </tr></thead>`;
+      const tbody = data.map(r => `
+        <tr>
+          <td>${r.date}</td>
+          <td>${r.running}</td>
+          <td>${r.weight}</td>
+          <td>${r.squash}</td>
+          <td>${r.assigned}</td>
+          <td>${r.trail}</td>
+          <td>${r.yoga}</td>
+          <td>${r.remark}</td>
+        </tr>
+      `).join("");
+      table.innerHTML = thead + "<tbody>" + tbody + "</tbody>";
+      container.appendChild(table);
+    }
+
+    function renderSummaryTable(labels, sums) {
+      const container = document.getElementById("summaryTable");
+      container.innerHTML = "";
+      const table = document.createElement("table");
+      const thead = `
+        <thead><tr>
+          <th>月份</th>
+          <th>有氧活動時間 (min)</th>
+          <th>教練指定作業完成次數</th>
+          <th>肌力訓練次數</th>
+        </tr></thead>`;
+      const tbody = labels.map((m, i) => {
+        const d = sums[i];
+        return `<tr><td>${m}</td><td>${d.aerobic}</td><td>${d.assigned}</td><td>${d.strength}</td></tr>`;
+      }).join("");
+      table.innerHTML = thead + "<tbody>" + tbody + "</tbody>";
+      container.appendChild(table);
+    }
+
+    function renderCharts(labels, sums) {
+      const datasets = [
+        { id: "aerobicChart", label: "有氧活動時間", key: "aerobic", color: "#36b9cc" },
+        { id: "assignedChart", label: "教練指定作業", key: "assigned", color: "#f6c23e" },
+        { id: "strengthChart", label: "肌力訓練", key: "strength", color: "#4e73df" }
+      ];
+
+      datasets.forEach(({ id, label, key, color }) => {
+        if (chartInstances[id]) chartInstances[id].destroy();
+        const ctx = document.getElementById(id);
+        chartInstances[id] = new Chart(ctx, {
+          type: "line",
+          data: {
+            labels,
+            datasets: [{
+              label,
+              data: sums.map(x => x[key]),
+              borderColor: color,
+              backgroundColor: color + "33",
+              fill: true,
+              tension: 0.25,
+              pointRadius: 4,
+              borderWidth: 2
+            }]
+          },
+          options: {
+            responsive: true,
+            scales: { y: { beginAtZero: true } },
+            plugins: { legend: { display: false } }
+          }
+        });
+      });
+    }
   </script>
 </body>
 </html>
-
