@@ -3,7 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <title>Workout 月累積記錄</title>
+
+  <!-- ✅ Chart.js + DataLabels plugin -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+
   <style>
     body {
       font-family: "Segoe UI", Arial, sans-serif;
@@ -72,6 +76,7 @@
     }
   </style>
 </head>
+
 <body>
   <h1>🏋️‍♀️ Workout 月累積記錄</h1>
   
@@ -172,7 +177,7 @@
         strength: d.weight + d.yoga
       }));
 
-      // 🔹 選擇年份或最近12月
+      // 🔹 最近12個月 or 指定年份
       if (mode === "recent12") {
         if (labels.length > 12) {
           labels = labels.slice(-12);
@@ -258,10 +263,20 @@
               borderWidth: 2
             }]
           },
+          plugins: [ChartDataLabels],
           options: {
             responsive: true,
             scales: { y: { beginAtZero: true } },
-            plugins: { legend: { display: false } }
+            plugins: {
+              legend: { display: false },
+              datalabels: {
+                color: '#333',
+                anchor: 'end',
+                align: 'top',
+                font: { weight: 'bold', size: 12 },
+                formatter: value => value
+              }
+            }
           }
         });
       });
@@ -269,3 +284,4 @@
   </script>
 </body>
 </html>
+
