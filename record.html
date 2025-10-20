@@ -2,13 +2,35 @@
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8" />
-  <title>Workout 記錄</title>
+  <title>🏋️‍♀️ Workout 記錄</title>
   <style>
-    body { font-family: Arial, sans-serif; margin: 20px; }
+    body { 
+      font-family: Arial, sans-serif; 
+      margin: 20px; 
+      background: #fafafa; 
+    }
     h1 { text-align: center; }
-    table { border-collapse: collapse; width: 100%; margin-top: 20px; }
-    th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+    table { 
+      border-collapse: collapse; 
+      width: 100%; 
+      margin-top: 20px; 
+      background: white; 
+      box-shadow: 0 0 8px rgba(0,0,0,0.1);
+    }
+    th, td { 
+      border: 1px solid #ccc; 
+      padding: 8px; 
+      text-align: center; 
+    }
     th { background-color: #f0f0f0; }
+    canvas {
+      margin-top: 40px;
+      width: 100%;
+      max-width: 800px;
+      display: block;
+      margin-left: auto;
+      margin-right: auto;
+    }
   </style>
 </head>
 <body>
@@ -29,6 +51,12 @@
     <tbody></tbody>
   </table>
 
+  <!-- 跑步折線圖 -->
+  <canvas id="runningChart"></canvas>
+
+  <!-- 引入 Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
   <script>
     const SHEET_ID = "1LFtkrReXYpFL1W51QZkRf7Az4ZMfxB1eBu2a3YQ0hzY";
     const SHEET_NAME = "sheet1";
@@ -37,9 +65,14 @@
     fetch(url)
       .then(res => res.text())
       .then(text => {
+        // 去除多餘字元
         const json = JSON.parse(text.substring(47, text.length - 2));
         const rows = json.table.rows;
         const tbody = document.querySelector("#dataTable tbody");
+
+        // 建立圖表用資料
+        const labels = [];
+        const runningData = [];
 
         rows.forEach(row => {
           const tr = document.createElement("tr");
@@ -49,6 +82,44 @@
             tr.appendChild(td);
           });
           tbody.appendChild(tr);
+
+          // 折線圖資料
+          const date = row.c[0]?.v || "";
+          const running = Number(row.c[1]?.v || 0);
+          if (date && !isNaN(running)) {
+            labels.push(date);
+            runningData.push(running);
+          }
+        });
+
+        // 畫出折線圖
+        const ctx = document.getElementById("runningChart").getContext("2d");
+        new Chart(ctx, {
+          type: "line",
+          data: {
+            labels: labels,
+            datasets: [{
+              label: "跑步時間 (分鐘)",
+              data: runningData,
+              borderColor: "#4CAF50",
+              backgroundColor: "rgba(76,175,80,0.2)",
+              borderWidth: 2,
+              tension: 0.2,
+              fill: true,
+              pointRadius: 4
+            }]
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              legend: { display: true, position: "top" },
+              title: { display: true, text: "🏃‍♂️ 跑步時間趨勢圖" }
+            },
+            scales: {
+              x: { title: { display: true, text: "日期" } },
+              y: { title: { display: true, text: "分鐘" }, beginAtZero: true }
+            }
+          }
         });
       })
       .catch(err => {
@@ -59,5 +130,4 @@
   </script>
 </body>
 </html>
-
 
