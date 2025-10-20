@@ -22,35 +22,46 @@
       border-radius: 10px;
       overflow: hidden;
       box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-      margin-bottom: 30px;
+      margin-bottom: 25px;
     }
     th, td {
       border: 1px solid #ddd;
       padding: 8px;
       text-align: center;
-      font-size: 14px;
+      font-size: 13px;
     }
     th {
       background-color: #f3f3f3;
     }
     .chart-container {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
       gap: 20px;
+      align-items: start;
     }
-    canvas {
+    .chart-box {
       background: #fff;
       border-radius: 12px;
       padding: 10px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+    .chart-box h3 {
+      font-size: 15px;
+      margin-bottom: 6px;
+    }
+    canvas {
+      width: 100% !important;
+      height: 220px !important;
     }
     .up { color: #28a745; font-weight: bold; }
     .down { color: #dc3545; font-weight: bold; }
     .nochange { color: #6c757d; }
     @media (max-width: 600px) {
       body { margin: 10px; }
-      h1 { font-size: 20px; }
-      th, td { font-size: 12px; }
+      h1 { font-size: 18px; }
+      th, td { font-size: 11px; }
+      canvas { height: 160px !important; }
     }
   </style>
 </head>
@@ -63,9 +74,18 @@
   <div id="recentTable"></div>
 
   <div class="chart-container">
-    <canvas id="aerobicChart"></canvas>
-    <canvas id="assignedChart"></canvas>
-    <canvas id="strengthChart"></canvas>
+    <div class="chart-box">
+      <h3>🏃‍♂️ 有氧活動時間 (min)</h3>
+      <canvas id="aerobicChart"></canvas>
+    </div>
+    <div class="chart-box">
+      <h3>📋 教練指定作業完成次數</h3>
+      <canvas id="assignedChart"></canvas>
+    </div>
+    <div class="chart-box">
+      <h3>💪 肌力訓練次數</h3>
+      <canvas id="strengthChart"></canvas>
+    </div>
   </div>
 
   <script>
@@ -143,7 +163,7 @@
           monthly[ym].yoga += item.yoga;
         });
 
-        const labels = Object.keys(monthly).sort();
+        let labels = Object.keys(monthly).sort();
         const sums = Object.values(monthly).map(d => ({
           aerobic: d.running + d.squash + d.trail,
           assigned: d.assigned,
@@ -151,13 +171,10 @@
           ...d
         }));
 
-        function getChange(current, previous) {
-          if (!previous || previous === 0) return "<span class='nochange'>—</span>";
-          const diff = ((current - previous) / previous) * 100;
-          const rounded = diff.toFixed(1);
-          if (diff > 0) return `<span class='up'>↑ ${rounded}%</span>`;
-          if (diff < 0) return `<span class='down'>↓ ${Math.abs(rounded)}%</span>`;
-          return `<span class='nochange'>0%</span>`;
+        // 🔹 僅取最近 12 個月
+        if (labels.length > 12) {
+          labels = labels.slice(-12);
+          sums.splice(0, sums.length - 12);
         }
 
         // === 月統計表格 ===
@@ -169,28 +186,17 @@
               <th>有氧活動時間 (min)</th>
               <th>教練指定作業完成次數</th>
               <th>肌力訓練次數</th>
-              <th>變化率</th>
             </tr>
           </thead>
         `;
         const tbody = labels.map((m, i) => {
           const d = sums[i];
-          const prev = sums[i - 1];
-          const aerobicChange = prev ? getChange(d.aerobic, prev.aerobic) : "<span class='nochange'>—</span>";
-          const assignedChange = prev ? getChange(d.assigned, prev.assigned) : "<span class='nochange'>—</span>";
-          const strengthChange = prev ? getChange(d.strength, prev.strength) : "<span class='nochange'>—</span>";
-
           return `
             <tr>
               <td>${m}</td>
               <td>${d.aerobic}</td>
               <td>${d.assigned}</td>
               <td>${d.strength}</td>
-              <td>
-                有氧 ${aerobicChange}　
-                作業 ${assignedChange}　
-                肌力 ${strengthChange}
-              </td>
             </tr>
           `;
         }).join("");
@@ -208,8 +214,9 @@
                 label,
                 data: sums.map(x => x[dataKey]),
                 borderColor: color,
-                fill: false,
-                tension: 0.2,
+                backgroundColor: color + "33",
+                fill: true,
+                tension: 0.25,
                 pointRadius: 4,
                 borderWidth: 2
               }]
@@ -217,7 +224,7 @@
             options: {
               responsive: true,
               scales: { y: { beginAtZero: true } },
-              plugins: { legend: { display: true, position: "bottom" } }
+              plugins: { legend: { display: false } }
             }
           });
         }
