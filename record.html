@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <title>Workout 記錄</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+    th { background-color: #f5f5f5; }
+  </style>
+</head>
+<body>
+  <h1>Workout 記錄</h1>
+  <table id="dataTable">
+    <thead>
+      <tr>
+        <th>日期</th>
+        <th>跑步 (分鐘)</th>
+        <th>重量訓練 (組)</th>
+        <th>壁球 (分鐘)</th>
+        <th>指定練習 (組)</th>
+        <th>健行 (分鐘)</th>
+        <th>瑜伽 (次數)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- 資料將插入這裡 -->
+    </tbody>
+  </table>
+
+  <script>
+    // 這邊請填入你的試算表 ID 和 Sheet 名稱
+    const SHEET_ID = '2PACX-1vR0eVAc_HvPkKkRdV5ITV317O5SpK3xwFsw8qLM42VApfsHf0nR-xTnAve-vAKaigi0mF95FZO3Fbmn';
+    const SHEET_NAME = 'sheet1';
+
+    // 構建 URL：使用 Google 的 “gviz/tq” 接口取得 JSON
+    const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?sheet=${encodeURIComponent(SHEET_NAME)}&tqx=out:json`;
+    
+    fetch(url)
+      .then(response => response.text())
+      .then(text => {
+        // 回傳的內容有前後一些額外文字，要處理一下
+        const json = JSON.parse(text.substring(47, text.length-2));
+        const rows = json.table.rows;
+        const tbody = document.getElementById('dataTable').querySelector('tbody');
+        
+        rows.forEach(r => {
+          const cells = r.c;
+          const tr = document.createElement('tr');
+          // 假設每列皆有 7 欄
+          cells.forEach(c => {
+            const td = document.createElement('td');
+            td.textContent = c && c.v !== null ? c.v : '';
+            tr.appendChild(td);
+          });
+          tbody.appendChild(tr);
+        });
+      })
+      .catch(err => {
+        console.error('取得試算表資料錯誤：', err);
+        const tbody = document.getElementById('dataTable').querySelector('tbody');
+        const tr = document.createElement('tr');
+        const td = document.createElement('td');
+        td.colSpan = 7;
+        td.textContent = '無法讀取資料';
+        tr.appendChild(td);
+        tbody.appendChild(tr);
+      });
+  </script>
+</body>
+</html>
