@@ -2,264 +2,135 @@
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>🏋️‍♀️ Workout 月累積記錄</title>
-
+  <title>Workout 月累積記錄</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     body {
-      font-family: "Noto Sans TC", Arial, sans-serif;
-      margin: 0;
-      background: #fafafa;
+      font-family: "Segoe UI", Arial, sans-serif;
+      margin: 20px;
+      background-color: #fafafa;
       color: #333;
-      padding: 20px;
     }
     h1 {
       text-align: center;
       margin-bottom: 10px;
-      font-size: 1.8rem;
     }
-    .selector {
-      text-align: center;
-      margin: 15px 0;
-    }
-    select {
-      font-size: 1rem;
-      padding: 6px 12px;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-    }
-    .table-container {
-      overflow-x: auto;
-      margin: 0 auto;
-      max-width: 100%;
-      background: white;
-      box-shadow: 0 0 8px rgba(0,0,0,0.1);
-      border-radius: 12px;
-    }
-    table {
-      border-collapse: collapse;
-      width: 100%;
-      min-width: 600px;
-    }
-    th, td {
-      border: 1px solid #ddd;
-      padding: 8px;
-      text-align: center;
-      white-space: nowrap;
-    }
-    th {
-      background-color: #f2f2f2;
-      font-weight: bold;
-    }
-
     .chart-container {
-      width: 100%;
-      max-width: 800px;
-      margin: 20px auto;
-      background: #fff;
-      padding: 10px;
-      border-radius: 12px;
-      box-shadow: 0 0 6px rgba(0,0,0,0.05);
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 20px;
+      margin-top: 20px;
     }
-
     canvas {
-      width: 100% !important;
-      height: auto !important;
+      background: #fff;
+      border-radius: 12px;
+      padding: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
-
-    @media (max-width: 768px) {
-      h1 { font-size: 1.5rem; }
-      th, td { padding: 6px; font-size: 0.9rem; }
+    @media (max-width: 600px) {
+      body { margin: 10px; }
+      h1 { font-size: 20px; }
     }
   </style>
 </head>
 <body>
   <h1>🏋️‍♀️ Workout 月累積記錄</h1>
 
-  <div class="selector">
-    <label for="chartSelect">選擇要顯示的項目：</label>
-    <select id="chartSelect">
-      <option value="all">全部顯示</option>
-      <option value="compare">📊 全項目比較</option>
-      <option value="0">跑步 (min)</option>
-      <option value="1">重量訓練 (sets)</option>
-      <option value="2">壁球 (min)</option>
-      <option value="3">教練指定作業 (sets)</option>
-      <option value="4">健行 (min)</option>
-      <option value="5">瑜伽 (sessions)</option>
-    </select>
+  <div class="chart-container">
+    <canvas id="runningChart"></canvas>
+    <canvas id="weightChart"></canvas>
+    <canvas id="squashChart"></canvas>
+    <canvas id="assignedChart"></canvas>
+    <canvas id="trailChart"></canvas>
+    <canvas id="yogaChart"></canvas>
   </div>
 
-  <div class="table-container">
-    <table id="dataTable">
-      <thead>
-        <tr>
-          <th>日期</th>
-          <th>跑步 (min)</th>
-          <th>重量訓練 (sets)</th>
-          <th>壁球 (min)</th>
-          <th>教練指定作業 (sets)</th>
-          <th>健行 (min)</th>
-          <th>瑜伽 (sessions)</th>
-          <th>備註</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-  </div>
-
-  <div id="charts"></div>
-
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
     const SHEET_ID = "1LFtkrReXYpFL1W51QZkRf7Az4ZMfxB1eBu2a3YQ0hzY";
     const SHEET_NAME = "sheet1";
-    const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?sheet=${encodeURIComponent(SHEET_NAME)}&tqx=out:json`;
+    const URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?sheet=${SHEET_NAME}&tqx=out:json`;
 
-    const chartNames = [
-      "跑步 (min)",
-      "重量訓練 (sets)",
-      "壁球 (min)",
-      "教練指定作業 (sets)",
-      "健行 (min)",
-      "瑜伽 (sessions)"
-    ];
-    const colors = ["#4CAF50", "#2196F3", "#FF9800", "#9C27B0", "#795548", "#E91E63"];
-    const charts = [];
-
-    fetch(url)
+    fetch(URL)
       .then(res => res.text())
       .then(text => {
         const json = JSON.parse(text.substring(47, text.length - 2));
         const rows = json.table.rows;
-        const tbody = document.querySelector("#dataTable tbody");
 
-        const monthlyData = {};
+        // 轉成結構化資料
+        const data = rows.map(r => ({
+          date: r.c[0]?.f || "",
+          running: r.c[1]?.v || 0,
+          weight: r.c[2]?.v || 0,
+          squash: r.c[3]?.v || 0,
+          assigned: r.c[4]?.v || 0,
+          trail: r.c[5]?.v || 0,
+          yoga: r.c[6]?.v || 0
+        }));
 
-        rows.forEach(row => {
-          const tr = document.createElement("tr");
-          const validCells = row.c.filter(cell => cell && cell.v !== undefined);
-          validCells.forEach(cell => {
-            const td = document.createElement("td");
-            td.textContent = cell.v ?? "";
-            tr.appendChild(td);
-          });
-          tbody.appendChild(tr);
-
-          const dateStr = row.c[0]?.v || "";
-          const values = row.c.slice(1, 7).map(c => Number(c?.v || 0));
-
-          let dateObj;
-          try {
-            dateObj = new Date(dateStr);
-            if (isNaN(dateObj)) return;
-          } catch {
-            return;
+        // 按月累積
+        const monthly = {};
+        data.forEach(item => {
+          if (!item.date) return;
+          const ym = item.date.slice(0, 7); // yyyy/mm
+          if (!monthly[ym]) {
+            monthly[ym] = { running: 0, weight: 0, squash: 0, assigned: 0, trail: 0, yoga: 0 };
           }
-
-          const monthKey = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, "0")}`;
-          if (!monthlyData[monthKey]) monthlyData[monthKey] = [0, 0, 0, 0, 0, 0];
-          for (let i = 0; i < 6; i++) monthlyData[monthKey][i] += values[i];
+          monthly[ym].running += item.running;
+          monthly[ym].weight += item.weight;
+          monthly[ym].squash += item.squash;
+          monthly[ym].assigned += item.assigned;
+          monthly[ym].trail += item.trail;
+          monthly[ym].yoga += item.yoga;
         });
 
-        const labels = Object.keys(monthlyData);
-        const dataArrays = [0,1,2,3,4,5].map(i => labels.map(m => monthlyData[m][i]));
-        const chartContainer = document.getElementById("charts");
+        const labels = Object.keys(monthly).sort();
+        const sums = Object.values(monthly);
 
-        // 各項目單獨圖表
-        chartNames.forEach((name, i) => {
-          const div = document.createElement("div");
-          div.className = "chart-container";
-          div.dataset.index = i;
-          const canvas = document.createElement("canvas");
-          div.appendChild(canvas);
-          chartContainer.appendChild(div);
-
-          const chart = new Chart(canvas.getContext("2d"), {
+        // 畫圖 function
+        function drawChart(id, label, dataKey, color) {
+          const ctx = document.getElementById(id);
+          new Chart(ctx, {
             type: "line",
             data: {
               labels,
               datasets: [{
-                label: name,
-                data: dataArrays[i],
-                borderColor: colors[i],
-                backgroundColor: colors[i] + "33",
-                borderWidth: 2,
+                label,
+                data: sums.map(x => x[dataKey]),
+                borderColor: color,
+                fill: false,
                 tension: 0.2,
-                fill: true,
-                pointRadius: 3
+                pointRadius: 4,
+                borderWidth: 2
               }]
             },
             options: {
               responsive: true,
-              maintainAspectRatio: false,
-              plugins: {
-                title: { display: true, text: "📅 每月 " + name + " 累積" }
-              },
               scales: {
-                x: { title: { display: true, text: "月份" } },
                 y: { beginAtZero: true }
+              },
+              plugins: {
+                legend: { display: true, position: "bottom" }
               }
             }
           });
-          charts.push({ div, chart });
-        });
+        }
 
-        // 全項目比較圖
-        const compareDiv = document.createElement("div");
-        compareDiv.className = "chart-container";
-        compareDiv.dataset.index = "compare";
-        const compareCanvas = document.createElement("canvas");
-        compareDiv.appendChild(compareCanvas);
-        chartContainer.appendChild(compareDiv);
-
-        const compareChart = new Chart(compareCanvas.getContext("2d"), {
-          type: "line",
-          data: {
-            labels,
-            datasets: chartNames.map((name, i) => ({
-              label: name,
-              data: dataArrays[i],
-              borderColor: colors[i],
-              backgroundColor: colors[i] + "33",
-              borderWidth: 2,
-              tension: 0.2,
-              fill: false,
-              pointRadius: 2
-            }))
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-              title: { display: true, text: "📊 各項運動月累積比較圖" },
-              legend: { position: "bottom" }
-            },
-            scales: {
-              x: { title: { display: true, text: "月份" } },
-              y: { beginAtZero: true }
-            }
-          }
-        });
-
-        charts.push({ div: compareDiv, chart: compareChart });
-
-        // 下拉選單控制
-        document.getElementById("chartSelect").addEventListener("change", e => {
-          const value = e.target.value;
-          charts.forEach(({ div }, idx) => {
-            div.style.display =
-              value === "all" ||
-              value === "compare" && div.dataset.index === "compare" ||
-              value == idx
-                ? "block"
-                : "none";
-          });
-        });
+        // 各項運動的圖表
+        drawChart("runningChart", "🏃 跑步 (min)", "running", "#ff6b6b");
+        drawChart("weightChart", "💪 重量訓練 (sets)", "weight", "#4e73df");
+        drawChart("squashChart", "🎾 壁球 (min)", "squash", "#36b9cc");
+        drawChart("assignedChart", "📋 教練指定作業 (sets)", "assigned", "#f6c23e");
+        drawChart("trailChart", "🚶 健行 (min)", "trail", "#1cc88a");
+        drawChart("yogaChart", "🧘‍♀️ 瑜伽 (sessions)", "yoga", "#e83e8c");
       })
       .catch(err => {
-        console.error("讀取錯誤：", err);
-        document.querySelector("#dataTable tbody").innerHTML =
+        console.error("讀取資料錯誤：", err);
+        alert("無法讀取 Google 試算表資料，請檢查是否發佈為公開檢視。");
+      });
+  </script>
+</body>
+</html>
+
 
 
 
