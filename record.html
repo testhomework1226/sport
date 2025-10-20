@@ -55,6 +55,9 @@
   <!-- 跑步折線圖 -->
   <canvas id="runningChart"></canvas>
 
+  <!-- 重訓折線圖 -->
+  <canvas id="weightChart"></canvas>
+
   <!-- 引入 Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -73,33 +76,36 @@
 
         const labels = [];
         const runningData = [];
+        const weightData = [];
 
         rows.forEach(row => {
           const tr = document.createElement("tr");
+          const validCells = row.c.filter(cell => cell && cell.v !== undefined);
 
-          // 填入每一格
-          for (let i = 0; i < 8; i++) {
+          validCells.forEach(cell => {
             const td = document.createElement("td");
-            td.textContent = row.c[i]?.v ?? "";
+            td.textContent = cell.v ?? "";
             tr.appendChild(td);
-          }
+          });
           tbody.appendChild(tr);
 
-          // 折線圖資料
           const date = row.c[0]?.v || "";
           const running = Number(row.c[1]?.v || 0);
-          if (date && !isNaN(running)) {
+          const weight = Number(row.c[2]?.v || 0);
+
+          if (date) {
             labels.push(date);
             runningData.push(running);
+            weightData.push(weight);
           }
         });
 
-        // 建立跑步折線圖
-        const ctx = document.getElementById("runningChart").getContext("2d");
-        new Chart(ctx, {
+        // 🏃‍♂️ 跑步時間圖
+        const ctx1 = document.getElementById("runningChart").getContext("2d");
+        new Chart(ctx1, {
           type: "line",
           data: {
-            labels: labels,
+            labels,
             datasets: [{
               label: "跑步時間 (分鐘)",
               data: runningData,
@@ -112,7 +118,6 @@
             }]
           },
           options: {
-            responsive: true,
             plugins: {
               legend: { display: true, position: "top" },
               title: { display: true, text: "🏃‍♂️ 跑步時間趨勢圖" }
@@ -120,6 +125,35 @@
             scales: {
               x: { title: { display: true, text: "日期" } },
               y: { title: { display: true, text: "分鐘" }, beginAtZero: true }
+            }
+          }
+        });
+
+        // 💪 重量訓練圖
+        const ctx2 = document.getElementById("weightChart").getContext("2d");
+        new Chart(ctx2, {
+          type: "line",
+          data: {
+            labels,
+            datasets: [{
+              label: "重量訓練 (sets)",
+              data: weightData,
+              borderColor: "#2196F3",
+              backgroundColor: "rgba(33,150,243,0.2)",
+              borderWidth: 2,
+              tension: 0.2,
+              fill: true,
+              pointRadius: 4
+            }]
+          },
+          options: {
+            plugins: {
+              legend: { display: true, position: "top" },
+              title: { display: true, text: "💪 重量訓練趨勢圖" }
+            },
+            scales: {
+              x: { title: { display: true, text: "日期" } },
+              y: { title: { display: true, text: "組數" }, beginAtZero: true }
             }
           }
         });
@@ -132,5 +166,6 @@
   </script>
 </body>
 </html>
+
 
 
