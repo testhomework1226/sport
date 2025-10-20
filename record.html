@@ -3,11 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <title>Workout 月累積記錄</title>
-
-  <!-- ✅ Chart.js + DataLabels plugin -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
-
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
   <style>
     body {
       font-family: "Segoe UI", Arial, sans-serif;
@@ -76,7 +73,6 @@
     }
   </style>
 </head>
-
 <body>
   <h1>🏋️‍♀️ Workout 月累積記錄</h1>
   
@@ -132,7 +128,6 @@
 
         allData.sort((a, b) => new Date(a.date) - new Date(b.date));
 
-        // 🔹 年份選單
         const years = [...new Set(allData.map(d => d.date.slice(0, 4)))];
         const select = document.getElementById("yearSelect");
         select.innerHTML = `<option value="recent12">最近12個月</option>` +
@@ -150,12 +145,10 @@
       });
 
     function renderAll(mode) {
-      // === 最近10筆 ===
       const sorted = [...allData].sort((a, b) => new Date(b.date) - new Date(a.date));
       const recent10 = sorted.slice(0, 10);
       renderRecentTable(recent10);
 
-      // === 月統計 ===
       const monthly = {};
       allData.forEach(item => {
         const ym = item.date.slice(0, 7);
@@ -177,7 +170,6 @@
         strength: d.weight + d.yoga
       }));
 
-      // 🔹 最近12個月 or 指定年份
       if (mode === "recent12") {
         if (labels.length > 12) {
           labels = labels.slice(-12);
@@ -270,11 +262,16 @@
             plugins: {
               legend: { display: false },
               datalabels: {
-                color: '#333',
+                color: '#111',
+                backgroundColor: 'rgba(255,255,255,0.8)',
+                borderRadius: 4,
+                padding: 4,
                 anchor: 'end',
                 align: 'top',
                 font: { weight: 'bold', size: 12 },
-                formatter: value => value
+                formatter: value => value,
+                clip: false,
+                clamp: true
               }
             }
           }
@@ -284,4 +281,3 @@
   </script>
 </body>
 </html>
-
