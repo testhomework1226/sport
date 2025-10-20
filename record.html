@@ -28,6 +28,7 @@
       border: 1px solid #ddd;
       padding: 8px;
       text-align: center;
+      font-size: 14px;
     }
     th {
       background-color: #f3f3f3;
@@ -58,6 +59,9 @@
 
   <div id="summaryTable"></div>
 
+  <h2>🗓️ 最近 10 筆運動紀錄</h2>
+  <div id="recentTable"></div>
+
   <div class="chart-container">
     <canvas id="aerobicChart"></canvas>
     <canvas id="assignedChart"></canvas>
@@ -82,9 +86,48 @@
           squash: r.c[3]?.v || 0,
           assigned: r.c[4]?.v || 0,
           trail: r.c[5]?.v || 0,
-          yoga: r.c[6]?.v || 0
+          yoga: r.c[6]?.v || 0,
+          remark: r.c[7]?.v || ""
         }));
 
+        // 🔹 依日期排序
+        const sorted = data.filter(d => d.date).sort((a, b) => new Date(b.date) - new Date(a.date));
+
+        // 🔹 最近 10 筆
+        const recent10 = sorted.slice(0, 10);
+
+        // === 建立「最近 10 筆紀錄」表格 ===
+        const recentTable = document.createElement("table");
+        const rthead = `
+          <thead>
+            <tr>
+              <th>日期</th>
+              <th>跑步 (min)</th>
+              <th>肌力組數</th>
+              <th>壁球 (min)</th>
+              <th>教練指定作業</th>
+              <th>健行 (min)</th>
+              <th>瑜伽</th>
+              <th>備註</th>
+            </tr>
+          </thead>
+        `;
+        const rtbody = recent10.map(r => `
+          <tr>
+            <td>${r.date}</td>
+            <td>${r.running}</td>
+            <td>${r.weight}</td>
+            <td>${r.squash}</td>
+            <td>${r.assigned}</td>
+            <td>${r.trail}</td>
+            <td>${r.yoga}</td>
+            <td>${r.remark}</td>
+          </tr>
+        `).join("");
+        recentTable.innerHTML = rthead + "<tbody>" + rtbody + "</tbody>";
+        document.getElementById("recentTable").appendChild(recentTable);
+
+        // === 月統計 ===
         const monthly = {};
         data.forEach(item => {
           if (!item.date) return;
@@ -108,7 +151,6 @@
           ...d
         }));
 
-        // === 計算變化率 ===
         function getChange(current, previous) {
           if (!previous || previous === 0) return "<span class='nochange'>—</span>";
           const diff = ((current - previous) / previous) * 100;
@@ -118,7 +160,7 @@
           return `<span class='nochange'>0%</span>`;
         }
 
-        // === 建立統計表格 ===
+        // === 月統計表格 ===
         const table = document.createElement("table");
         const thead = `
           <thead>
@@ -155,7 +197,7 @@
         table.innerHTML = thead + "<tbody>" + tbody + "</tbody>";
         document.getElementById("summaryTable").appendChild(table);
 
-        // === 三張圖表 ===
+        // === 三張折線圖 ===
         function drawChart(id, label, dataKey, color) {
           const ctx = document.getElementById(id);
           new Chart(ctx, {
@@ -191,3 +233,4 @@
   </script>
 </body>
 </html>
+
