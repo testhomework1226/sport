@@ -43,6 +43,9 @@
       padding: 10px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
+    .up { color: #28a745; font-weight: bold; }
+    .down { color: #dc3545; font-weight: bold; }
+    .nochange { color: #6c757d; }
     @media (max-width: 600px) {
       body { margin: 10px; }
       h1 { font-size: 20px; }
@@ -56,12 +59,9 @@
   <div id="summaryTable"></div>
 
   <div class="chart-container">
-    <canvas id="runningChart"></canvas>
-    <canvas id="weightChart"></canvas>
-    <canvas id="squashChart"></canvas>
+    <canvas id="aerobicChart"></canvas>
     <canvas id="assignedChart"></canvas>
-    <canvas id="trailChart"></canvas>
-    <canvas id="yogaChart"></canvas>
+    <canvas id="strengthChart"></canvas>
   </div>
 
   <script>
@@ -75,7 +75,6 @@
         const json = JSON.parse(text.substring(47, text.length - 2));
         const rows = json.table.rows;
 
-        // 轉換資料格式
         const data = rows.map(r => ({
           date: r.c[0]?.f || "",
           running: r.c[1]?.v || 0,
@@ -86,11 +85,10 @@
           yoga: r.c[6]?.v || 0
         }));
 
-        // 按月累積
         const monthly = {};
         data.forEach(item => {
           if (!item.date) return;
-          const ym = item.date.slice(0, 7); // yyyy/mm
+          const ym = item.date.slice(0, 7);
           if (!monthly[ym]) {
             monthly[ym] = { running: 0, weight: 0, squash: 0, assigned: 0, trail: 0, yoga: 0 };
           }
@@ -103,7 +101,22 @@
         });
 
         const labels = Object.keys(monthly).sort();
-        const sums = Object.values(monthly);
+        const sums = Object.values(monthly).map(d => ({
+          aerobic: d.running + d.squash + d.trail,
+          assigned: d.assigned,
+          strength: d.weight + d.yoga,
+          ...d
+        }));
+
+        // === 計算變化率 ===
+        function getChange(current, previous) {
+          if (!previous || previous === 0) return "<span class='nochange'>—</span>";
+          const diff = ((current - previous) / previous) * 100;
+          const rounded = diff.toFixed(1);
+          if (diff > 0) return `<span class='up'>↑ ${rounded}%</span>`;
+          if (diff < 0) return `<span class='down'>↓ ${Math.abs(rounded)}%</span>`;
+          return `<span class='nochange'>0%</span>`;
+        }
 
         // === 建立統計表格 ===
         const table = document.createElement("table");
@@ -111,42 +124,38 @@
           <thead>
             <tr>
               <th>月份</th>
-              <th>跑步 (min)</th>
-              <th>重量訓練 (sets)</th>
-              <th>壁球 (min)</th>
-              <th>教練指定作業 (sets)</th>
-              <th>健行 (min)</th>
-              <th>瑜伽 (sessions)</th>
               <th>有氧活動時間 (min)</th>
               <th>教練指定作業完成次數</th>
               <th>肌力訓練次數</th>
+              <th>變化率</th>
             </tr>
           </thead>
         `;
         const tbody = labels.map((m, i) => {
           const d = sums[i];
-          const aerobic = d.running + d.squash + d.trail;
-          const assigned = d.assigned;
-          const strength = d.weight + d.yoga;
+          const prev = sums[i - 1];
+          const aerobicChange = prev ? getChange(d.aerobic, prev.aerobic) : "<span class='nochange'>—</span>";
+          const assignedChange = prev ? getChange(d.assigned, prev.assigned) : "<span class='nochange'>—</span>";
+          const strengthChange = prev ? getChange(d.strength, prev.strength) : "<span class='nochange'>—</span>";
+
           return `
             <tr>
               <td>${m}</td>
-              <td>${d.running}</td>
-              <td>${d.weight}</td>
-              <td>${d.squash}</td>
+              <td>${d.aerobic}</td>
               <td>${d.assigned}</td>
-              <td>${d.trail}</td>
-              <td>${d.yoga}</td>
-              <td><b>${aerobic}</b></td>
-              <td><b>${assigned}</b></td>
-              <td><b>${strength}</b></td>
+              <td>${d.strength}</td>
+              <td>
+                有氧 ${aerobicChange}　
+                作業 ${assignedChange}　
+                肌力 ${strengthChange}
+              </td>
             </tr>
           `;
         }).join("");
         table.innerHTML = thead + "<tbody>" + tbody + "</tbody>";
         document.getElementById("summaryTable").appendChild(table);
 
-        // === 畫圖 function ===
+        // === 三張圖表 ===
         function drawChart(id, label, dataKey, color) {
           const ctx = document.getElementById(id);
           new Chart(ctx, {
@@ -171,13 +180,9 @@
           });
         }
 
-        // 各項運動折線圖
-        drawChart("runningChart", "🏃 跑步 (min)", "running", "#ff6b6b");
-        drawChart("weightChart", "💪 重量訓練 (sets)", "weight", "#4e73df");
-        drawChart("squashChart", "🎾 壁球 (min)", "squash", "#36b9cc");
-        drawChart("assignedChart", "📋 教練指定作業 (sets)", "assigned", "#f6c23e");
-        drawChart("trailChart", "🚶 健行 (min)", "trail", "#1cc88a");
-        drawChart("yogaChart", "🧘‍♀️ 瑜伽 (sessions)", "yoga", "#e83e8c");
+        drawChart("aerobicChart", "🏃‍♂️ 有氧活動時間 (min)", "aerobic", "#36b9cc");
+        drawChart("assignedChart", "📋 教練指定作業完成次數", "assigned", "#f6c23e");
+        drawChart("strengthChart", "💪 肌力訓練次數", "strength", "#4e73df");
       })
       .catch(err => {
         console.error("讀取資料錯誤：", err);
@@ -186,5 +191,3 @@
   </script>
 </body>
 </html>
-
-
