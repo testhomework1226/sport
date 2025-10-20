@@ -46,6 +46,7 @@
         <th>指定練習 (sets)</th>
         <th>健行 (min)</th>
         <th>瑜伽 (sessions)</th>
+        <th>備註</th>
       </tr>
     </thead>
     <tbody></tbody>
@@ -65,22 +66,23 @@
     fetch(url)
       .then(res => res.text())
       .then(text => {
-        // 去除多餘字元
+        // 去除前後包裝
         const json = JSON.parse(text.substring(47, text.length - 2));
         const rows = json.table.rows;
         const tbody = document.querySelector("#dataTable tbody");
 
-        // 建立圖表用資料
         const labels = [];
         const runningData = [];
 
         rows.forEach(row => {
           const tr = document.createElement("tr");
-          row.c.forEach(cell => {
+
+          // 填入每一格
+          for (let i = 0; i < 8; i++) {
             const td = document.createElement("td");
-            td.textContent = cell ? cell.v : "";
+            td.textContent = row.c[i]?.v ?? "";
             tr.appendChild(td);
-          });
+          }
           tbody.appendChild(tr);
 
           // 折線圖資料
@@ -92,7 +94,7 @@
           }
         });
 
-        // 畫出折線圖
+        // 建立跑步折線圖
         const ctx = document.getElementById("runningChart").getContext("2d");
         new Chart(ctx, {
           type: "line",
@@ -125,9 +127,10 @@
       .catch(err => {
         console.error("讀取錯誤：", err);
         document.querySelector("#dataTable tbody").innerHTML =
-          "<tr><td colspan='7'>無法讀取資料</td></tr>";
+          "<tr><td colspan='8'>無法讀取資料</td></tr>";
       });
   </script>
 </body>
 </html>
+
 
