@@ -80,6 +80,7 @@
     <label for="chartSelect">選擇要顯示的項目：</label>
     <select id="chartSelect">
       <option value="all">全部顯示</option>
+      <option value="compare">📊 全項目比較</option>
       <option value="0">跑步 (min)</option>
       <option value="1">重量訓練 (sets)</option>
       <option value="2">壁球 (min)</option>
@@ -165,6 +166,7 @@
         const dataArrays = [0,1,2,3,4,5].map(i => labels.map(m => monthlyData[m][i]));
         const chartContainer = document.getElementById("charts");
 
+        // 各項目單獨圖表
         chartNames.forEach((name, i) => {
           const div = document.createElement("div");
           div.className = "chart-container";
@@ -203,21 +205,62 @@
           charts.push({ div, chart });
         });
 
+        // 全項目比較圖
+        const compareDiv = document.createElement("div");
+        compareDiv.className = "chart-container";
+        compareDiv.dataset.index = "compare";
+        const compareCanvas = document.createElement("canvas");
+        compareDiv.appendChild(compareCanvas);
+        chartContainer.appendChild(compareDiv);
+
+        const compareChart = new Chart(compareCanvas.getContext("2d"), {
+          type: "line",
+          data: {
+            labels,
+            datasets: chartNames.map((name, i) => ({
+              label: name,
+              data: dataArrays[i],
+              borderColor: colors[i],
+              backgroundColor: colors[i] + "33",
+              borderWidth: 2,
+              tension: 0.2,
+              fill: false,
+              pointRadius: 2
+            }))
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              title: { display: true, text: "📊 各項運動月累積比較圖" },
+              legend: { position: "bottom" }
+            },
+            scales: {
+              x: { title: { display: true, text: "月份" } },
+              y: { beginAtZero: true }
+            }
+          }
+        });
+
+        charts.push({ div: compareDiv, chart: compareChart });
+
+        // 下拉選單控制
         document.getElementById("chartSelect").addEventListener("change", e => {
           const value = e.target.value;
           charts.forEach(({ div }, idx) => {
-            div.style.display = (value === "all" || value == idx) ? "block" : "none";
+            div.style.display =
+              value === "all" ||
+              value === "compare" && div.dataset.index === "compare" ||
+              value == idx
+                ? "block"
+                : "none";
           });
         });
       })
       .catch(err => {
         console.error("讀取錯誤：", err);
         document.querySelector("#dataTable tbody").innerHTML =
-          "<tr><td colspan='8'>無法讀取資料</td></tr>";
-      });
-  </script>
-</body>
-</html>
+
 
 
 
