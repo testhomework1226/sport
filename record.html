@@ -61,6 +61,11 @@
       font-size: 15px;
       margin-bottom: 6px;
     }
+    .avg-box {
+      font-size: 13px;
+      margin-top: 4px;
+      color: #555;
+    }
     canvas {
       width: 100% !important;
       height: 220px !important;
@@ -90,14 +95,17 @@
     <div class="chart-box">
       <h3>🏃‍♂️ 有氧活動時間 (min)</h3>
       <canvas id="aerobicChart"></canvas>
+      <div class="avg-box" id="avgAerobic"></div>
     </div>
     <div class="chart-box">
       <h3>📋 教練指定作業完成次數</h3>
       <canvas id="assignedChart"></canvas>
+      <div class="avg-box" id="avgAssigned"></div>
     </div>
     <div class="chart-box">
       <h3>💪 肌力訓練次數</h3>
       <canvas id="strengthChart"></canvas>
+      <div class="avg-box" id="avgStrength"></div>
     </div>
   </div>
 
@@ -183,6 +191,7 @@
 
       renderSummaryTable(labels, sums);
       renderCharts(labels, sums);
+      renderAverages(sums);
     }
 
     function renderRecentTable(data) {
@@ -277,6 +286,17 @@
           }
         });
       });
+    }
+
+    function renderAverages(sums) {
+      const avg = arr => arr.length ? (arr.reduce((a, b) => a + b, 0) / arr.length).toFixed(1) : 0;
+      const aerobicAvg = avg(sums.map(x => x.aerobic));
+      const assignedAvg = avg(sums.map(x => x.assigned));
+      const strengthAvg = avg(sums.map(x => x.strength));
+
+      document.getElementById("avgAerobic").innerText = `📊 平均：${aerobicAvg} 分鐘/月`;
+      document.getElementById("avgAssigned").innerText = `📊 平均：${assignedAvg} 次/月`;
+      document.getElementById("avgStrength").innerText = `📊 平均：${strengthAvg} 次/月`;
     }
   </script>
 </body>
