@@ -250,37 +250,31 @@
         if (chartInstances[id]) chartInstances[id].destroy();
         const ctx = document.getElementById(id);
         chartInstances[id] = new Chart(ctx, {
-          type: "line",
+          type: "bar",
           data: {
             labels,
             datasets: [{
               label,
               data: sums.map(x => x[key]),
+              backgroundColor: color + "99",
               borderColor: color,
-              backgroundColor: color + "33",
-              fill: true,
-              tension: 0.25,
-              pointRadius: 4,
-              borderWidth: 2
+              borderWidth: 1
             }]
           },
           plugins: [ChartDataLabels],
           options: {
             responsive: true,
-            scales: { y: { beginAtZero: true } },
+            scales: { 
+              y: { beginAtZero: true }
+            },
             plugins: {
               legend: { display: false },
               datalabels: {
                 color: '#111',
-                backgroundColor: 'rgba(255,255,255,0.8)',
-                borderRadius: 4,
-                padding: 4,
                 anchor: 'end',
                 align: 'top',
                 font: { weight: 'bold', size: 12 },
-                formatter: value => value,
-                clip: false,
-                clamp: true
+                formatter: value => value
               }
             }
           }
