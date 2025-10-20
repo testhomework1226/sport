@@ -2,65 +2,104 @@
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>🏋️‍♀️ Workout 記錄</title>
+
   <style>
     body { 
-      font-family: Arial, sans-serif; 
-      margin: 20px; 
-      background: #fafafa; 
+      font-family: "Noto Sans TC", Arial, sans-serif;
+      margin: 0;
+      background: #fafafa;
+      color: #333;
+      padding: 20px;
     }
-    h1 { text-align: center; }
-    table { 
-      border-collapse: collapse; 
-      width: 100%; 
-      margin-top: 20px; 
-      background: white; 
+    h1 { 
+      text-align: center; 
+      margin-bottom: 20px;
+      font-size: 1.8rem;
+    }
+    .table-container {
+      overflow-x: auto; /* ✅ 手機可橫向滑動 */
+      margin: 0 auto;
+      max-width: 100%;
+      background: white;
       box-shadow: 0 0 8px rgba(0,0,0,0.1);
+      border-radius: 12px;
+    }
+    table { 
+      border-collapse: collapse;
+      width: 100%;
+      min-width: 600px; /* ✅ 避免太擠 */
     }
     th, td { 
-      border: 1px solid #ccc; 
+      border: 1px solid #ddd; 
       padding: 8px; 
       text-align: center; 
+      white-space: nowrap;
     }
-    th { background-color: #f0f0f0; }
-    canvas {
-      margin-top: 40px;
+    th { 
+      background-color: #f2f2f2; 
+      font-weight: bold;
+    }
+
+    .chart-container {
       width: 100%;
       max-width: 800px;
-      display: block;
-      margin-left: auto;
-      margin-right: auto;
+      margin: 30px auto;
+      background: #fff;
+      padding: 10px;
+      border-radius: 12px;
+      box-shadow: 0 0 6px rgba(0,0,0,0.05);
+    }
+
+    canvas {
+      width: 100% !important;
+      height: auto !important;
+    }
+
+    @media (max-width: 768px) {
+      h1 { font-size: 1.5rem; }
+      th, td { padding: 6px; font-size: 0.9rem; }
+      .chart-container { padding: 8px; }
+    }
+
+    @media (max-width: 480px) {
+      body { padding: 10px; }
+      table { min-width: 480px; }
+      h1 { font-size: 1.3rem; }
     }
   </style>
 </head>
 <body>
   <h1>🏋️‍♀️ Workout 記錄</h1>
 
-  <table id="dataTable">
-    <thead>
-      <tr>
-        <th>日期</th>
-        <th>跑步 (min)</th>
-        <th>重量訓練 (sets)</th>
-        <th>壁球 (min)</th>
-        <th>指定練習 (sets)</th>
-        <th>健行 (min)</th>
-        <th>瑜伽 (sessions)</th>
-        <th>備註</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
+  <div class="table-container">
+    <table id="dataTable">
+      <thead>
+        <tr>
+          <th>日期</th>
+          <th>跑步 (min)</th>
+          <th>重量訓練 (sets)</th>
+          <th>壁球 (min)</th>
+          <th>指定練習 (sets)</th>
+          <th>健行 (min)</th>
+          <th>瑜伽 (sessions)</th>
+          <th>備註</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
 
-  <!-- 跑步折線圖 -->
-  <canvas id="runningChart"></canvas>
+  <div class="chart-container">
+    <canvas id="runningChart"></canvas>
+  </div>
 
-  <!-- 重訓折線圖 -->
-  <canvas id="weightChart"></canvas>
+  <div class="chart-container">
+    <canvas id="weightChart"></canvas>
+  </div>
 
-  <!-- 引入 Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
   <script>
     const SHEET_ID = "1LFtkrReXYpFL1W51QZkRf7Az4ZMfxB1eBu2a3YQ0hzY";
     const SHEET_NAME = "sheet1";
@@ -69,7 +108,6 @@
     fetch(url)
       .then(res => res.text())
       .then(text => {
-        // 去除前後包裝
         const json = JSON.parse(text.substring(47, text.length - 2));
         const rows = json.table.rows;
         const tbody = document.querySelector("#dataTable tbody");
@@ -118,6 +156,8 @@
             }]
           },
           options: {
+            responsive: true,
+            maintainAspectRatio: false,
             plugins: {
               legend: { display: true, position: "top" },
               title: { display: true, text: "🏃‍♂️ 跑步時間趨勢圖" }
@@ -147,6 +187,8 @@
             }]
           },
           options: {
+            responsive: true,
+            maintainAspectRatio: false,
             plugins: {
               legend: { display: true, position: "top" },
               title: { display: true, text: "💪 重量訓練趨勢圖" }
@@ -166,6 +208,7 @@
   </script>
 </body>
 </html>
+
 
 
 
