@@ -92,8 +92,11 @@
   <div id="msg"></div>
 
   <script>
-    const GAS_URL = "https://script.google.com/macros/s/https://script.google.com/macros/s/AKfycbz7NRq8t5I4LpUE2bhREBmf5yikVKiNYynGb-7Kw6STVtUVhF4JHT2tH6anUWIhJ6S7/exec";
-    const PASSWORD = "123"; // ← 改成你設定的密碼
+    // 🔧 1. 改成你自己的 Google Apps Script 部署網址
+    const GAS_URL = "https://script.google.com/macros/s/【你的 Apps Script 網址】/exec";
+
+    // 🔐 2. 改成你自訂的密碼
+    const PASSWORD = "mysecret";
 
     document.getElementById("form").addEventListener("submit", async (e) => {
       e.preventDefault();
@@ -125,10 +128,16 @@
           headers: { "Content-Type": "application/json" }
         });
         const text = await res.text();
+
         if (text.includes("OK")) {
-          msg.textContent = "✅ 已成功新增 / 更新該日紀錄！";
+          msg.textContent = "✅ 已成功新增 / 更新該日紀錄，2 秒後將返回統計頁...";
           msg.className = "success";
           e.target.reset();
+
+          // ⏳ 2 秒後跳轉回首頁 (index.html)
+          setTimeout(() => {
+            window.location.href = "index.html";
+          }, 2000);
         } else {
           throw new Error(text);
         }
