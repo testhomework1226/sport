@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <title>Workout 資料上傳測試</title>
+  <style>
+    body { font-family: sans-serif; max-width: 400px; margin: 40px auto; text-align: center; }
+    input, button { margin: 5px; padding: 6px; width: 80%; }
+  </style>
+</head>
+<body>
+  <h2>🏋️‍♀️ Workout 資料上傳</h2>
+  <input id="running" placeholder="跑步 (min)">
+  <input id="weight" placeholder="重訓次數">
+  <input id="squash" placeholder="壁球 (min)">
+  <input id="assigned" placeholder="教練指定">
+  <input id="trail" placeholder="健行 (min)">
+  <input id="yoga" placeholder="瑜伽">
+  <input id="remark" placeholder="備註">
+  <button onclick="sendData()">送出</button>
+  <p id="result"></p>
+
+  <script>
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyySjBhutelM9cO-0G5LRi89MxHB4jU_nh6cUSZcsy_K8ciDvXDjzUzFtytAkzRVzhxtg/exec";
+
+    async function sendData() {
+      const payload = {
+        running: Number(document.getElementById("running").value || 0),
+        weight: Number(document.getElementById("weight").value || 0),
+        squash: Number(document.getElementById("squash").value || 0),
+        assigned: Number(document.getElementById("assigned").value || 0),
+        trail: Number(document.getElementById("trail").value || 0),
+        yoga: Number(document.getElementById("yoga").value || 0),
+        remark: document.getElementById("remark").value || ""
+      };
+
+      const res = await fetch(SCRIPT_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      const text = await res.text();
+      document.getElementById("result").innerText = "✅ 已上傳成功！";
+    }
+  </script>
+</body>
+</html>
