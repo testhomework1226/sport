@@ -213,4 +213,93 @@
     });
 
     // 📥 表單提交
-    document.getElementById("form").addEventList
+    document.getElementById("form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const msg = document.getElementById("msg");
+      msg.textContent = "";
+
+      const pwd = document.getElementById("password").value.trim();
+      if (pwd !== PASSWORD) {
+        msg.textContent = "❌ 密碼錯誤";
+        msg.className = "error";
+        return;
+      }
+
+      const data = {
+        password: pwd,
+        date: document.getElementById("date").value,
+        running: document.getElementById("running").value,
+        weight: document.getElementById("weight").value,
+        squash: document.getElementById("squash").value,
+        assigned: document.getElementById("assigned").value,
+        trail: document.getElementById("trail").value,
+        yoga: document.getElementById("yoga").value,
+        remark: document.getElementById("remark").value
+      };
+
+      try {
+        const res = await fetch(GAS_URL, {
+          method: "POST",
+          body: JSON.stringify(data),
+          headers: { "Content-Type": "application/json" }
+        });
+        const text = await res.text();
+
+        if (text.includes("OK")) {
+          msg.textContent = "✅ 已新增 / 更新該日紀錄";
+          msg.className = "success";
+          e.target.reset();
+        } else {
+          msg.textContent = "⚠️ 發生錯誤：" + text;
+          msg.className = "error";
+        }
+      } catch (err) {
+        msg.textContent = "❌ 傳送失敗：" + err.message;
+        msg.className = "error";
+      }
+    });
+
+    // 📊 載入統計圖表
+    async function loadCharts() {
+      const res = await fetch("data.json"); // ⚠️ 這裡可換成你的 Google Sheet JSON 或 Apps Script 產出資料
+      const data = await res.json();
+
+      // 範例假資料 (若無 Google 連線可用這段)
+      const months = ["1月","2月","3月","4月","5月","6月","7月","8月","9月","10月","11月","12月"];
+      const cardio = [300,250,320,280,400,350,370,410,420,390,360,410];
+      const coach = [10,8,9,7,10,11,10,12,9,8,10,11];
+      const strength = [15,13,16,14,18,20,19,17,16,15,14,18];
+
+      drawChart("chart1", "有氧活動時間 (min)", months, cardio);
+      drawChart("chart2", "教練指定作業完成次數", months, coach);
+      drawChart("chart3", "肌力訓練次數", months, strength);
+    }
+
+    function drawChart(id, title, labels, data) {
+      const ctx = document.getElementById(id).getContext("2d");
+      new Chart(ctx, {
+        type: "bar",
+        data: {
+          labels: labels,
+          datasets: [{
+            label: title,
+            data: data,
+            backgroundColor: "#4e73df"
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: { beginAtZero: true }
+          },
+          plugins: {
+            legend: { display: false },
+            title: { display: true, text: title }
+          }
+        }
+      });
+    }
+  </script>
+</body>
+</html>
+
