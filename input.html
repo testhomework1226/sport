@@ -2,6 +2,7 @@
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>新增運動紀錄</title>
   <style>
     body {
@@ -32,6 +33,7 @@
       border-radius: 6px;
       border: 1px solid #ccc;
       font-size: 14px;
+      box-sizing: border-box;
     }
     button {
       margin-top: 15px;
@@ -39,6 +41,7 @@
       color: white;
       font-weight: bold;
       cursor: pointer;
+      transition: background 0.3s;
     }
     button:hover {
       background-color: #2e59d9;
@@ -92,12 +95,19 @@
   <div id="msg"></div>
 
   <script>
-    // 🔧 1. 改成你自己的 Google Apps Script 部署網址
+    // ✅ 1. 改成你自己的 Google Apps Script 部署網址
     const GAS_URL = "https://script.google.com/macros/s/【你的 Apps Script 網址】/exec";
 
-    // 🔐 2. 改成你自訂的密碼
+    // ✅ 2. 設定你自訂的密碼（需與 Apps Script 一致）
     const PASSWORD = "mysecret";
 
+    // ✅ 自動填入今天日期
+    document.addEventListener("DOMContentLoaded", () => {
+      const today = new Date().toISOString().split("T")[0];
+      document.getElementById("date").value = today;
+    });
+
+    // ✅ 表單送出處理
     document.getElementById("form").addEventListener("submit", async (e) => {
       e.preventDefault();
       const msg = document.getElementById("msg");
@@ -111,6 +121,7 @@
       }
 
       const data = {
+        password: pwd, // ✅ 一起送出密碼驗證
         date: document.getElementById("date").value,
         running: document.getElementById("running").value,
         weight: document.getElementById("weight").value,
@@ -130,14 +141,17 @@
         const text = await res.text();
 
         if (text.includes("OK")) {
-          msg.textContent = "✅ 已成功新增 / 更新該日紀錄，2 秒後將返回統計頁...";
+          msg.textContent = "✅ 已成功新增 / 更新該日紀錄，2 秒後返回統計頁...";
           msg.className = "success";
           e.target.reset();
 
-          // ⏳ 2 秒後跳轉回首頁 (read.html)
+          // ⏳ 2 秒後跳轉回 read.html（統計頁）
           setTimeout(() => {
             window.location.href = "read.html";
           }, 2000);
+        } else if (text.includes("Unauthorized")) {
+          msg.textContent = "🚫 Apps Script 密碼驗證失敗";
+          msg.className = "error";
         } else {
           throw new Error(text);
         }
@@ -149,3 +163,4 @@
   </script>
 </body>
 </html>
+
