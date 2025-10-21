@@ -95,12 +95,19 @@
 
   <script>
     // ✅ 你的 Apps Script 網址（已部署）
-    https://script.google.com/macros/s/AKfycbz_Nt8uowVUbs3JaadH500R_5lj1ee4Ghk4i-jAGrbfDdl2IYErG_XgwyRhO-_Mc4HG/exec;
-
-
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbz_Nt8uowVUbs3JaadH500R_5lj1ee4Ghk4i-jAGrbfDdl2IYErG_XgwyRhO-_Mc4HG/exec";
 
     // ✅ 與 Google Apps Script 相同的密碼
     const PASSWORD = "Nancy2025";
+
+    // 🗓️ 自動帶入今天日期
+    document.addEventListener("DOMContentLoaded", () => {
+      const today = new Date();
+      const yyyy = today.getFullYear();
+      const mm = String(today.getMonth() + 1).padStart(2, "0");
+      const dd = String(today.getDate()).padStart(2, "0");
+      document.getElementById("date").value = `${yyyy}-${mm}-${dd}`;
+    });
 
     document.getElementById("form").addEventListener("submit", async (e) => {
       e.preventDefault();
@@ -148,7 +155,8 @@
           msg.textContent = "❌ 密碼錯誤";
           msg.className = "error";
         } else {
-          throw new Error(text);
+          msg.textContent = "⚠️ 伺服器回傳：" + text;
+          msg.className = "error";
         }
       } catch (err) {
         msg.textContent = "⚠️ 傳送失敗：" + err.message;
