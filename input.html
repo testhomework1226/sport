@@ -39,19 +39,21 @@
       color: white;
       font-weight: bold;
       cursor: pointer;
+      border: none;
     }
     button:hover {
       background-color: #2e59d9;
     }
-    .success {
-      color: green;
+    #msg {
       text-align: center;
       margin-top: 10px;
+      font-weight: bold;
+    }
+    .success {
+      color: green;
     }
     .error {
       color: red;
-      text-align: center;
-      margin-top: 10px;
     }
   </style>
 </head>
@@ -84,7 +86,7 @@
     <input type="number" id="yoga" min="0" value="0">
 
     <label>備註：</label>
-    <textarea id="remark" rows="2"></textarea>
+    <textarea id="remark" rows="2" placeholder="可輸入簡短紀錄..."></textarea>
 
     <button type="submit">送出紀錄</button>
   </form>
@@ -92,17 +94,26 @@
   <div id="msg"></div>
 
   <script>
-    // 🔧 1. 換成你自己的 Google Apps Script 網址
-    const GAS_URL = "https://script.google.com/macros/s/【你的部署網址】/exec";
+    // ✅ 你的 Apps Script 網址（已部署）
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbz7NRq8t5I4LpUE2bhREBmf5yikVKiNYynGb-7Kw6STVtUVhF4JHT2tH6anUWIhJ6S7/exec";
+
+    // ✅ 與 Google Apps Script 相同的密碼
+    const PASSWORD = "Nancy2025";
 
     document.getElementById("form").addEventListener("submit", async (e) => {
       e.preventDefault();
       const msg = document.getElementById("msg");
       msg.textContent = "";
 
-      // 📦 收集輸入資料
+      const pwd = document.getElementById("password").value.trim();
+      if (pwd !== PASSWORD) {
+        msg.textContent = "❌ 密碼錯誤";
+        msg.className = "error";
+        return;
+      }
+
       const data = {
-        password: document.getElementById("password").value.trim(), // ✅ 新增密碼傳遞
+        password: pwd,
         date: document.getElementById("date").value,
         running: document.getElementById("running").value,
         weight: document.getElementById("weight").value,
@@ -119,19 +130,20 @@
           body: JSON.stringify(data),
           headers: { "Content-Type": "application/json" }
         });
+
         const text = await res.text();
 
         if (text.includes("OK")) {
-          msg.textContent = "✅ 已成功新增 / 更新該日紀錄，2 秒後將返回統計頁...";
+          msg.textContent = "✅ 成功新增或更新該日紀錄！";
           msg.className = "success";
           e.target.reset();
 
-          // ⏳ 2 秒後返回 read.html
+          // 2 秒後回到紀錄頁
           setTimeout(() => {
-            window.location.href = "read.html";
+            window.location.href = "record.html";
           }, 2000);
         } else if (text.includes("Unauthorized")) {
-          msg.textContent = "❌ 密碼錯誤，請重新輸入。";
+          msg.textContent = "❌ 密碼錯誤";
           msg.className = "error";
         } else {
           throw new Error(text);
@@ -144,5 +156,6 @@
   </script>
 </body>
 </html>
+
 
 
