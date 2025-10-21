@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <title>新增運動紀錄</title>
+  <style>
+    body {
+      font-family: "Segoe UI", Arial, sans-serif;
+      background-color: #f5f6fa;
+      padding: 20px;
+      max-width: 600px;
+      margin: auto;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    form {
+      background: #fff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    label {
+      display: block;
+      margin: 10px 0 4px;
+      font-weight: bold;
+    }
+    input, textarea, button {
+      width: 100%;
+      padding: 8px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 14px;
+    }
+    button {
+      margin-top: 15px;
+      background-color: #4e73df;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #2e59d9;
+    }
+    .success {
+      color: green;
+      text-align: center;
+      margin-top: 10px;
+    }
+    .error {
+      color: red;
+      text-align: center;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>🏋️‍♀️ 新增運動紀錄</h1>
+
+  <form id="form">
+    <label for="password">密碼：</label>
+    <input type="password" id="password" required placeholder="請輸入密碼">
+
+    <label for="date">日期：</label>
+    <input type="date" id="date" required>
+
+    <label>跑步 (min)：</label>
+    <input type="number" id="running" min="0" value="0">
+
+    <label>重量訓練 (sets)：</label>
+    <input type="number" id="weight" min="0" value="0">
+
+    <label>壁球 (min)：</label>
+    <input type="number" id="squash" min="0" value="0">
+
+    <label>教練指定作業 (sets)：</label>
+    <input type="number" id="assigned" min="0" value="0">
+
+    <label>健行 (min)：</label>
+    <input type="number" id="trail" min="0" value="0">
+
+    <label>瑜伽 (sessions)：</label>
+    <input type="number" id="yoga" min="0" value="0">
+
+    <label>備註：</label>
+    <textarea id="remark" rows="2"></textarea>
+
+    <button type="submit">送出紀錄</button>
+  </form>
+
+  <div id="msg"></div>
+
+  <script>
+    const GAS_URL = "https://script.google.com/macros/s/https://script.google.com/macros/s/AKfycbz7NRq8t5I4LpUE2bhREBmf5yikVKiNYynGb-7Kw6STVtUVhF4JHT2tH6anUWIhJ6S7/exec";
+    const PASSWORD = "123"; // ← 改成你設定的密碼
+
+    document.getElementById("form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const msg = document.getElementById("msg");
+      msg.textContent = "";
+
+      const pwd = document.getElementById("password").value.trim();
+      if (pwd !== PASSWORD) {
+        msg.textContent = "❌ 密碼錯誤";
+        msg.className = "error";
+        return;
+      }
+
+      const data = {
+        date: document.getElementById("date").value,
+        running: document.getElementById("running").value,
+        weight: document.getElementById("weight").value,
+        squash: document.getElementById("squash").value,
+        assigned: document.getElementById("assigned").value,
+        trail: document.getElementById("trail").value,
+        yoga: document.getElementById("yoga").value,
+        remark: document.getElementById("remark").value
+      };
+
+      try {
+        const res = await fetch(GAS_URL, {
+          method: "POST",
+          body: JSON.stringify(data),
+          headers: { "Content-Type": "application/json" }
+        });
+        const text = await res.text();
+        if (text.includes("OK")) {
+          msg.textContent = "✅ 已成功新增 / 更新該日紀錄！";
+          msg.className = "success";
+          e.target.reset();
+        } else {
+          throw new Error(text);
+        }
+      } catch (err) {
+        msg.textContent = "⚠️ 傳送失敗：" + err.message;
+        msg.className = "error";
+      }
+    });
+  </script>
+</body>
+</html>
