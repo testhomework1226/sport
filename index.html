@@ -2,14 +2,40 @@
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8" />
-  <title>Workout 資料上傳測試</title>
+  <title>Workout 資料上傳</title>
   <style>
-    body { font-family: sans-serif; max-width: 400px; margin: 40px auto; text-align: center; }
-    input, button { margin: 5px; padding: 6px; width: 80%; }
+    body {
+      font-family: "Segoe UI", Arial, sans-serif;
+      max-width: 420px;
+      margin: 40px auto;
+      background: #fafafa;
+      text-align: center;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    h2 { margin-bottom: 20px; }
+    input, button {
+      margin: 6px 0;
+      padding: 8px;
+      width: 90%;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 14px;
+    }
+    button {
+      background: #4e73df;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover { background: #3752b3; }
+    #result { margin-top: 15px; color: #333; font-weight: bold; }
   </style>
 </head>
 <body>
   <h2>🏋️‍♀️ Workout 資料上傳</h2>
+
   <input id="running" placeholder="跑步 (min)">
   <input id="weight" placeholder="重訓次數">
   <input id="squash" placeholder="壁球 (min)">
@@ -18,10 +44,12 @@
   <input id="yoga" placeholder="瑜伽">
   <input id="remark" placeholder="備註">
   <button onclick="sendData()">送出</button>
+
   <p id="result"></p>
 
   <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyySjBhutelM9cO-0G5LRi89MxHB4jU_nh6cUSZcsy_K8ciDvXDjzUzFtytAkzRVzhxtg/exec";
+    // ⚠️ 請在這裡貼上你部署後的 Google Apps Script 網址
+    const SCRIPT_URL = "https://script.google.com/macros/s/XXXXXXXXXXXXXXXXXXXX/exec";
 
     async function sendData() {
       const payload = {
@@ -34,15 +62,23 @@
         remark: document.getElementById("remark").value || ""
       };
 
-      const res = await fetch(SCRIPT_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      });
+      try {
+        const res = await fetch(SCRIPT_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
 
-      const text = await res.text();
-      document.getElementById("result").innerText = "✅ 已上傳成功！";
+        if (res.ok) {
+          document.getElementById("result").innerText = "✅ 已成功上傳到試算表！";
+        } else {
+          document.getElementById("result").innerText = "⚠️ 上傳失敗，請再試一次。";
+        }
+      } catch (err) {
+        document.getElementById("result").innerText = "🚫 錯誤：" + err.message;
+      }
     }
   </script>
 </body>
 </html>
+
