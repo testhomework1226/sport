@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🏋️‍♀️ 運動紀錄系統</title>
+  <style>
+    body {
+      font-family: "Segoe UI", Arial, sans-serif;
+      background-color: #f5f6fa;
+      margin: 0;
+      padding: 0;
+    }
+
+    header {
+      background-color: #4e73df;
+      color: white;
+      text-align: center;
+      padding: 15px 0;
+      font-size: 20px;
+      font-weight: bold;
+    }
+
+    nav {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      background: #e2e6ea;
+      padding: 10px;
+      flex-wrap: wrap;
+    }
+
+    nav button {
+      border: none;
+      background: #4e73df;
+      color: white;
+      padding: 10px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    nav button.active {
+      background: #1cc88a;
+    }
+
+    section {
+      padding: 20px;
+      max-width: 900px;
+      margin: auto;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      margin-top: 15px;
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    /* 表單 */
+    form label {
+      display: block;
+      margin: 10px 0 4px;
+      font-weight: bold;
+    }
+
+    input, textarea, select, button {
+      width: 100%;
+      padding: 8px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 14px;
+      box-sizing: border-box;
+    }
+
+    form button {
+      margin-top: 15px;
+      background-color: #4e73df;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    form button:hover {
+      background-color: #2e59d9;
+    }
+
+    .success {
+      color: green;
+      text-align: center;
+      margin-top: 10px;
+    }
+
+    .error {
+      color: red;
+      text-align: center;
+      margin-top: 10px;
+    }
+
+    canvas {
+      width: 100%;
+      height: 300px;
+    }
+
+    .chart {
+      margin-top: 20px;
+    }
+
+    @media (max-width: 600px) {
+      section {
+        padding: 15px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>🏋️‍♀️ 運動紀錄系統</header>
+
+  <nav>
+    <button id="btnInput" class="active">📝 新增紀錄</button>
+    <button id="btnStats">📊 查看統計</button>
+  </nav>
+
+  <!-- 📝 新增紀錄區 -->
+  <section id="inputSection">
+    <h2>新增運動紀錄</h2>
+    <form id="form">
+      <label>密碼：</label>
+      <input type="password" id="password" required placeholder="請輸入密碼" />
+
+      <label>日期：</label>
+      <input type="date" id="date" required />
+
+      <label>跑步 (min)：</label>
+      <input type="number" id="running" min="0" value="0" />
+
+      <label>重量訓練 (sets)：</label>
+      <input type="number" id="weight" min="0" value="0" />
+
+      <label>壁球 (min)：</label>
+      <input type="number" id="squash" min="0" value="0" />
+
+      <label>教練指定作業 (sets)：</label>
+      <input type="number" id="assigned" min="0" value="0" />
+
+      <label>健行 (min)：</label>
+      <input type="number" id="trail" min="0" value="0" />
+
+      <label>瑜伽 (sessions)：</label>
+      <input type="number" id="yoga" min="0" value="0" />
+
+      <label>備註：</label>
+      <textarea id="remark" rows="2"></textarea>
+
+      <button type="submit">送出紀錄</button>
+    </form>
+    <div id="msg"></div>
+  </section>
+
+  <!-- 📊 統計區 -->
+  <section id="statsSection" style="display:none;">
+    <h2>最近 12 個月統計</h2>
+
+    <label>選擇年份：</label>
+    <select id="yearSelect"></select>
+
+    <div class="chart">
+      <canvas id="chart1"></canvas>
+    </div>
+    <div class="chart">
+      <canvas id="chart2"></canvas>
+    </div>
+    <div class="chart">
+      <canvas id="chart3"></canvas>
+    </div>
+  </section>
+
+  <!-- ✅ Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <script>
+    // Google Apps Script API URL
+    const GAS_URL = "https://script.google.com/macros/s/【你的 Apps Script 網址】/exec";
+    const PASSWORD = "mysecret";
+
+    // 自動填今天日期
+    document.addEventListener("DOMContentLoaded", () => {
+      const today = new Date().toISOString().split("T")[0];
+      document.getElementById("date").value = today;
+    });
+
+    // 切換顯示
+    const btnInput = document.getElementById("btnInput");
+    const btnStats = document.getElementById("btnStats");
+    const inputSection = document.getElementById("inputSection");
+    const statsSection = document.getElementById("statsSection");
+
+    btnInput.addEventListener("click", () => {
+      btnInput.classList.add("active");
+      btnStats.classList.remove("active");
+      inputSection.style.display = "block";
+      statsSection.style.display = "none";
+    });
+
+    btnStats.addEventListener("click", () => {
+      btnStats.classList.add("active");
+      btnInput.classList.remove("active");
+      inputSection.style.display = "none";
+      statsSection.style.display = "block";
+      loadCharts();
+    });
+
+    // 📥 表單提交
+    document.getElementById("form").addEventList
