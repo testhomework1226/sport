@@ -159,16 +159,16 @@
         strength: d.weight + d.yoga
       }));
 
-      // 只顯示最近 12 個月
-     // if (labels.length > 12) {
-       // labels = labels.slice(-12);
-       // sums = sums.slice(-12);
-      //}
+       只顯示最近 12 個月
+      if (labels.length > 12) {
+        labels = labels.slice(-12);
+        sums = sums.slice(-12);
+      }
 
-     // renderSummaryTable(labels, sums);
-      //renderCharts(labels, sums);
-     // renderAverages(sums);
-    //}
+      renderSummaryTable(labels, sums);
+      renderCharts(labels, sums);
+      renderAverages(sums);
+    }
 
     function renderRecentTable(data) {
       const container = document.getElementById("recentTable");
