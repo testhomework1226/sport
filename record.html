@@ -16,6 +16,12 @@
       text-align: center;
       margin-bottom: 5px;
     }
+    #todayDate {
+      text-align: center;
+      font-size: 14px;
+      color: #666;
+      margin-bottom: 15px;
+    }
     #yearSelectContainer {
       text-align: center;
       margin: 10px 0 20px 0;
@@ -79,14 +85,13 @@
   </style>
 </head>
 <body>
-  <h1>🏋️‍♀️ Workout 月累積記錄</h1>
-  
+  <h1>🏋️‍♀️ Workout 運動記錄</h1>
+  <div id="todayDate"></div>
+
   <div id="yearSelectContainer">
     <label for="yearSelect">📅 選擇年份：</label>
     <select id="yearSelect"></select>
   </div>
-
-  <div id="summaryTable"></div>
 
   <h2>🗓️ 最近 10 筆運動紀錄</h2>
   <div id="recentTable"></div>
@@ -110,6 +115,12 @@
   </div>
 
   <script>
+    // 顯示今天日期
+    const todayElement = document.getElementById("todayDate");
+    const today = new Date();
+    const options = { year: "numeric", month: "long", day: "numeric", weekday: "long" };
+    todayElement.textContent = `📅 今天日期：${today.toLocaleDateString("zh-TW", options)}`;
+
     const SHEET_ID = "1PQf57fTRf8Q5Vwcx9yLlEcCJRY8ctYpElnF3WGvuXxA";
     const SHEET_NAME = "工作表1";
     const URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?sheet=${SHEET_NAME}&tqx=out:json`;
@@ -164,7 +175,7 @@
       allData.forEach(item => {
         const ym = item.date.slice(0, 7);
         if (!monthly[ym]) {
-          monthly[ym] = { running: 0, weight: 0, ball: 0, assigned: 0, trail: 0, yoga: 0, other: 0, speed: 0, heart_rate: 0 };
+          monthly[ym] = { running: 0, weight: 0, ball: 0, assigned: 0, trail: 0, yoga: 0, other: 0 };
         }
         monthly[ym].running += item.running;
         monthly[ym].weight += item.weight;
@@ -193,7 +204,6 @@
         sums = filter.map(x => sums[x.i]);
       }
 
-      renderSummaryTable(labels, sums);
       renderCharts(labels, sums);
       renderAverages(sums);
     }
@@ -223,25 +233,6 @@
           <td>${r.remark}</td>
         </tr>
       `).join("");
-      table.innerHTML = thead + "<tbody>" + tbody + "</tbody>";
-      container.appendChild(table);
-    }
-
-    function renderSummaryTable(labels, sums) {
-      const container = document.getElementById("summaryTable");
-      container.innerHTML = "";
-      const table = document.createElement("table");
-      const thead = `
-        <thead><tr>
-          <th>月份</th>
-          <th>有氧活動時間 (min)</th>
-          <th>教練指定作業完成次數</th>
-          <th>肌力訓練次數</th>
-        </tr></thead>`;
-      const tbody = labels.map((m, i) => {
-        const d = sums[i];
-        return `<tr><td>${m}</td><td>${d.aerobic}</td><td>${d.assigned}</td><td>${d.strength}</td></tr>`;
-      }).join("");
       table.innerHTML = thead + "<tbody>" + tbody + "</tbody>";
       container.appendChild(table);
     }
