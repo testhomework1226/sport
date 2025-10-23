@@ -131,9 +131,9 @@
           assigned: r.c[4]?.v || 0,
           trail: r.c[5]?.v || 0,
           yoga: r.c[6]?.v || 0,
-          other:r.c[7]?.v|| 0,
-          speed:r.c[8]?.v|| 0,
-          heart rate:r.c[9]?.v|| 0,
+          other: r.c[7]?.v || 0,
+          speed: r.c[8]?.v || 0,
+          heart_rate: r.c[9]?.v || 0,
           remark: r.c[10]?.v || ""
         })).filter(d => d.date);
 
@@ -164,14 +164,15 @@
       allData.forEach(item => {
         const ym = item.date.slice(0, 7);
         if (!monthly[ym]) {
-          monthly[ym] = { running: 0, weight: 0, ball: 0, assigned: 0, trail: 0, yoga: 0 };
+          monthly[ym] = { running: 0, weight: 0, ball: 0, assigned: 0, trail: 0, yoga: 0, other: 0, speed: 0, heart_rate: 0 };
         }
         monthly[ym].running += item.running;
         monthly[ym].weight += item.weight;
-        monthly[ym].squash += item.squash;
+        monthly[ym].ball += item.ball;
         monthly[ym].assigned += item.assigned;
         monthly[ym].trail += item.trail;
         monthly[ym].yoga += item.yoga;
+        monthly[ym].other += item.other;
       });
 
       let labels = Object.keys(monthly).sort();
@@ -218,7 +219,7 @@
           <td>${r.yoga}</td>
           <td>${r.other}</td>
           <td>${r.speed}</td>
-          <td>${r.heart rate}</td>
+          <td>${r.heart_rate}</td>
           <td>${r.remark}</td>
         </tr>
       `).join("");
