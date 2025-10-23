@@ -110,8 +110,8 @@
   </div>
 
   <script>
-    const SHEET_ID = "1LFtkrReXYpFL1W51QZkRf7Az4ZMfxB1eBu2a3YQ0hzY";
-    const SHEET_NAME = "sheet1";
+    const SHEET_ID = "1PQf57fTRf8Q5Vwcx9yLlEcCJRY8ctYpElnF3WGvuXxA";
+    const SHEET_NAME = "工作表1";
     const URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?sheet=${SHEET_NAME}&tqx=out:json`;
 
     let allData = [];
@@ -127,11 +127,14 @@
           date: r.c[0]?.f || "",
           running: r.c[1]?.v || 0,
           weight: r.c[2]?.v || 0,
-          squash: r.c[3]?.v || 0,
+          ball: r.c[3]?.v || 0,
           assigned: r.c[4]?.v || 0,
           trail: r.c[5]?.v || 0,
           yoga: r.c[6]?.v || 0,
-          remark: r.c[7]?.v || ""
+          other:r.c[7]?.v|| 0,
+          speed:r.c[8]?.v|| 0,
+          heart rate:r.c[9]?.v|| 0,
+          remark: r.c[10]?.v || ""
         })).filter(d => d.date);
 
         allData.sort((a, b) => new Date(a.date) - new Date(b.date));
@@ -161,7 +164,7 @@
       allData.forEach(item => {
         const ym = item.date.slice(0, 7);
         if (!monthly[ym]) {
-          monthly[ym] = { running: 0, weight: 0, squash: 0, assigned: 0, trail: 0, yoga: 0 };
+          monthly[ym] = { running: 0, weight: 0, ball: 0, assigned: 0, trail: 0, yoga: 0 };
         }
         monthly[ym].running += item.running;
         monthly[ym].weight += item.weight;
@@ -173,7 +176,7 @@
 
       let labels = Object.keys(monthly).sort();
       let sums = Object.values(monthly).map(d => ({
-        aerobic: d.running + d.squash + d.trail,
+        aerobic: d.running + d.ball + d.trail,
         assigned: d.assigned,
         strength: d.weight + d.yoga
       }));
@@ -202,17 +205,20 @@
         <thead><tr>
           <th>日期</th><th>跑步(min)</th><th>肌力訓練</th>
           <th>壁球(min)</th><th>教練指定</th>
-          <th>健行(min)</th><th>瑜伽</th><th>備註</th>
+          <th>健行(min)</th><th>瑜伽</th><th>其他</th><th>跑速</th><th>心率</th><th>備註</th>
         </tr></thead>`;
       const tbody = data.map(r => `
         <tr>
           <td>${r.date}</td>
           <td>${r.running}</td>
           <td>${r.weight}</td>
-          <td>${r.squash}</td>
+          <td>${r.ball}</td>
           <td>${r.assigned}</td>
           <td>${r.trail}</td>
           <td>${r.yoga}</td>
+          <td>${r.other}</td>
+          <td>${r.speed}</td>
+          <td>${r.heart rate}</td>
           <td>${r.remark}</td>
         </tr>
       `).join("");
