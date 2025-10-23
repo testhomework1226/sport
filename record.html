@@ -14,7 +14,17 @@
     }
     h1 {
       text-align: center;
-      margin-bottom: 20px;
+      margin-bottom: 5px;
+    }
+    #yearSelectContainer {
+      text-align: center;
+      margin: 10px 0 20px 0;
+    }
+    select {
+      padding: 5px 10px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 14px;
     }
     table {
       width: 100%;
@@ -70,6 +80,11 @@
 </head>
 <body>
   <h1>🏋️‍♀️ Workout 月累積記錄</h1>
+  
+  <div id="yearSelectContainer">
+    <label for="yearSelect">📅 選擇年份：</label>
+    <select id="yearSelect"></select>
+  </div>
 
   <div id="summaryTable"></div>
 
@@ -124,7 +139,15 @@
 
         allData.sort((a, b) => new Date(a.date) - new Date(b.date));
 
-        // 直接顯示最近 12 個月
+        const years = [...new Set(allData.map(d => d.date.slice(0, 4)))];
+        const select = document.getElementById("yearSelect");
+        select.innerHTML = `<option value="recent12">最近12個月</option>` +
+          years.map(y => `<option value="${y}">${y}</option>`).join("");
+
+        select.addEventListener("change", e => {
+          renderAll(e.target.value);
+        });
+
         renderAll("recent12");
       })
       .catch(err => {
@@ -141,7 +164,7 @@
       allData.forEach(item => {
         const ym = item.date.slice(0, 7);
         if (!monthly[ym]) {
-          monthly[ym] = { running: 0, weight: 0, ball: 0, assigned: 0, trail: 0, yoga: 0, other: 0 };
+          monthly[ym] = { running: 0, weight: 0, ball: 0, assigned: 0, trail: 0, yoga: 0, other: 0, speed: 0, heart_rate: 0 };
         }
         monthly[ym].running += item.running;
         monthly[ym].weight += item.weight;
@@ -159,10 +182,15 @@
         strength: d.weight + d.yoga
       }));
 
-       只顯示最近 12 個月
-      if (labels.length > 12) {
-        labels = labels.slice(-12);
-        sums = sums.slice(-12);
+      if (mode === "recent12") {
+        if (labels.length > 12) {
+          labels = labels.slice(-12);
+          sums = sums.slice(-12);
+        }
+      } else {
+        const filter = labels.map((l, i) => ({ l, i })).filter(x => x.l.startsWith(mode));
+        labels = filter.map(x => x.l);
+        sums = filter.map(x => sums[x.i]);
       }
 
       renderSummaryTable(labels, sums);
@@ -243,7 +271,9 @@
           plugins: [ChartDataLabels],
           options: {
             responsive: true,
-            scales: { y: { beginAtZero: true } },
+            scales: { 
+              y: { beginAtZero: true }
+            },
             plugins: {
               legend: { display: false },
               datalabels: {
@@ -272,5 +302,3 @@
   </script>
 </body>
 </html>
-
-
