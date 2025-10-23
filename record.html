@@ -20,17 +20,7 @@
       text-align: center;
       font-size: 14px;
       color: #666;
-      margin-bottom: 15px;
-    }
-    #yearSelectContainer {
-      text-align: center;
-      margin: 10px 0 20px 0;
-    }
-    select {
-      padding: 5px 10px;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-      font-size: 14px;
+      margin-bottom: 20px;
     }
     table {
       width: 100%;
@@ -88,11 +78,6 @@
   <h1>🏋️‍♀️ Workout 運動記錄</h1>
   <div id="todayDate"></div>
 
-  <div id="yearSelectContainer">
-    <label for="yearSelect">📅 選擇年份：</label>
-    <select id="yearSelect"></select>
-  </div>
-
   <h2>🗓️ 最近 10 筆運動紀錄</h2>
   <div id="recentTable"></div>
 
@@ -115,7 +100,7 @@
   </div>
 
   <script>
-    // 顯示今天日期
+    // === 顯示今天日期 ===
     const todayElement = document.getElementById("todayDate");
     const today = new Date();
     const options = { year: "numeric", month: "long", day: "numeric", weekday: "long" };
@@ -150,23 +135,14 @@
 
         allData.sort((a, b) => new Date(a.date) - new Date(b.date));
 
-        const years = [...new Set(allData.map(d => d.date.slice(0, 4)))];
-        const select = document.getElementById("yearSelect");
-        select.innerHTML = `<option value="recent12">最近12個月</option>` +
-          years.map(y => `<option value="${y}">${y}</option>`).join("");
-
-        select.addEventListener("change", e => {
-          renderAll(e.target.value);
-        });
-
-        renderAll("recent12");
+        renderAll(); // 不再分年份，直接顯示最近12個月
       })
       .catch(err => {
         console.error("讀取資料錯誤：", err);
         alert("無法讀取 Google 試算表資料，請確認是否設為公開檢視。");
       });
 
-    function renderAll(mode) {
+    function renderAll() {
       const sorted = [...allData].sort((a, b) => new Date(b.date) - new Date(a.date));
       const recent10 = sorted.slice(0, 10);
       renderRecentTable(recent10);
@@ -193,15 +169,9 @@
         strength: d.weight + d.yoga
       }));
 
-      if (mode === "recent12") {
-        if (labels.length > 12) {
-          labels = labels.slice(-12);
-          sums = sums.slice(-12);
-        }
-      } else {
-        const filter = labels.map((l, i) => ({ l, i })).filter(x => x.l.startsWith(mode));
-        labels = filter.map(x => x.l);
-        sums = filter.map(x => sums[x.i]);
+      if (labels.length > 12) {
+        labels = labels.slice(-12);
+        sums = sums.slice(-12);
       }
 
       renderCharts(labels, sums);
@@ -262,9 +232,7 @@
           plugins: [ChartDataLabels],
           options: {
             responsive: true,
-            scales: { 
-              y: { beginAtZero: true }
-            },
+            scales: { y: { beginAtZero: true } },
             plugins: {
               legend: { display: false },
               datalabels: {
@@ -293,3 +261,4 @@
   </script>
 </body>
 </html>
+
